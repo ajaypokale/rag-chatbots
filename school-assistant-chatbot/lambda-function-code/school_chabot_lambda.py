@@ -1,3 +1,22 @@
+None selected 
+
+Skip to content
+Using Gmail with screen readers
+Conversations
+Re: check once
+Inbox
+
+Girish Mukim
+Attachments
+12:40 PM (26 minutes ago)
+to me
+
+Lambda code and agent instructions.
+
+On Sun, Dec 14, 2025 at 12:09 PM Ajay Pokale <cdacajay@gmail.com> wrote:
+https://builder.aws.com/content/36oWAC9G4gbHqcNQFViEsUeqmo0/how-to-build-a-scalable-rag-based-chatbot-on-aws-a-school-chatbot-assistant
+ 2 Attachments
+  •  Scanned by Gmail
 import json
 import boto3
 from typing import Dict, Any
@@ -26,7 +45,7 @@ def create_api_response(status_code: int, body: Dict[str, Any], headers: Dict[st
 def lambda_handler(event, context):
 
     http_method = event.get("httpMethod")
-
+    print("http_method:", http_method)
     if http_method == "OPTIONS":
         return create_api_response(200, {})
 
@@ -36,6 +55,7 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event.get("body", "{}"))
         question = body.get("question")
+        print("question:", question)
         if not question:
             raise ValueError("Missing 'question' field in request body")
     except Exception as e:
@@ -45,7 +65,7 @@ def lambda_handler(event, context):
     try:
         import uuid
         session_id = str(uuid.uuid4())
-
+        print("session_id:", session_id)
         response = bedrock.invoke_agent(
             agentId=AGENT_ID,
             agentAliasId=AGENT_ALIAS_ID,
@@ -57,17 +77,20 @@ def lambda_handler(event, context):
         answer = ""
 
         # The "completion" field contains a generator of events
-        completion_events = response.get("completion", [])
-
-        for event in completion_events:
-            content = event.get("content", [])
-            if len(content) > 0:
-                text_part = content[0].get("textResponsePart")
-                if text_part:
-                    answer += text_part.get("text", "")
+        events = response.get("completion", [])
+        print("events:", events)
+        for event in events:
+            print("event:", event)
+            chunk =event.get("chunk")
+            print("chunk:", chunk)
+            if chunk:
+                answer += chunk.get("bytes").decode("utf-8")
+                print("answer:", answer)
 
     except Exception as e:
         print(f"Bedrock Error: {e}")
         return create_api_response(500, {"error": "Bedrock agent invocation failed. Check logs."})
 
     return create_api_response(200, {"answer": answer})
+Lambda.py
+Displaying Agent-Instructions.txt.
